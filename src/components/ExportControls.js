@@ -1,17 +1,9 @@
 import React, { useState } from "react";
 import { toPng } from "html-to-image";
-import { Download, Share2, Check, Sun, Moon, Copy } from "lucide-react";
+import { Download, Sun, Moon } from "lucide-react";
 
-// Custom Twitter/X Icon SVG Component
-const TwitterIcon = ({ className = "w-3.5 h-3.5" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
-);
-
-export default function ExportControls({ cardRef, isLightMode, setIsLightMode, repoName, ownerName }) {
+export default function ExportControls({ cardRef, isLightMode, setIsLightMode }) {
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
@@ -39,7 +31,7 @@ export default function ExportControls({ cardRef, isLightMode, setIsLightMode, r
       });
 
       const link = document.createElement("a");
-      link.download = `repostory-${ownerName}-${repoName}.png`;
+      link.download = "repostory-card.png";
       link.href = dataUrl;
       link.click();
     } catch (error) {
@@ -49,18 +41,6 @@ export default function ExportControls({ cardRef, isLightMode, setIsLightMode, r
       setIsDownloading(false);
     }
   };
-
-  const handleCopyLink = () => {
-    const currentUrl = typeof window !== "undefined" ? window.location.href : "";
-    navigator.clipboard.writeText(currentUrl);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-
-  const shareText = `Check out the development story of ${ownerName}/${repoName}! Built with RepoStory.`;
-  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(
-    typeof window !== "undefined" ? window.location.href : ""
-  )}`;
 
   return (
     <div className="flex flex-col gap-4 p-5 rounded-lg border border-zinc-800 bg-zinc-950/40 w-full font-mono">
@@ -99,42 +79,8 @@ export default function ExportControls({ cardRef, isLightMode, setIsLightMode, r
           <Download className="w-4 h-4" />
           <span>{isDownloading ? "Generating PNG..." : "Download PNG Card"}</span>
         </button>
-
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            id="copy-link-btn"
-            onClick={handleCopyLink}
-            className="flex items-center justify-center gap-1.5 py-2.5 px-4 text-xs rounded-full border border-zinc-850 bg-black hover:bg-zinc-900 hover:border-zinc-750 text-zinc-300 transition-colors cursor-pointer"
-          >
-            {isCopied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copy Link</span>
-              </>
-            )}
-          </button>
-
-          <a
-            id="share-twitter-btn"
-            href={twitterUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 py-2.5 px-4 text-xs rounded-full border border-zinc-850 bg-black hover:bg-zinc-900 hover:border-zinc-750 text-zinc-300 transition-colors"
-          >
-            <TwitterIcon className="w-3.5 h-3.5 text-sky-400" />
-            <span>Share card</span>
-          </a>
-        </div>
       </div>
 
-      <div className="text-[10px] text-zinc-600 leading-normal mt-2 border-t border-zinc-900 pt-3">
-        💡 <span className="font-semibold text-zinc-500">Pro-tip:</span> Downloads are generated locally at double density, making them crisp for Twitter/X, LinkedIn, and GitHub readmes.
-      </div>
     </div>
   );
 }

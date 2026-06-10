@@ -5,6 +5,57 @@
 
 const GITHUB_API_BASE = "https://api.github.com";
 
+function decodeBase64Utf8(base64String) {
+  try {
+    if (typeof Buffer !== "undefined") {
+      return Buffer.from(base64String, "base64").toString("utf-8");
+    }
+  } catch {
+    // Fall through to browser-safe decode path.
+  }
+
+  const binary = atob(base64String);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function extractReadmeInfo(markdownText) {
+  if (!markdownText || typeof markdownText !== "string") {
+    return {
+      summary: null,
+      highlights: [],
+    };
+  }
+
+  // Remove fenced code blocks and normalize for cleaner prose extraction.
+  const withoutCodeBlocks = markdownText.replace(/```[\s\S]*?```/g, " ");
+  const normalized = withoutCodeBlocks.replace(/\r\n/g, "\n");
+  const paragraphs = normalized
+    .split(/\n\s*\n/)
+    .map((block) => block.replace(/\n/g, " ").trim())
+    .filter(Boolean);
+
+  const summary =
+    paragraphs.find((block) => {
+      if (block.length < 40) return false;
+      if (/^#{1,6}\s/.test(block)) return false;
+      if (/^!\[.*\]\(.*\)$/.test(block)) return false;
+      if (/^<.*>$/.test(block)) return false;
+      if (/^\|.*\|$/.test(block)) return false;
+      if (/^\[!/.test(block)) return false;
+      return true;
+    }) || null;
+
+  const headingMatches = [...normalized.matchAll(/^#{2,3}\s+(.+)$/gm)]
+    .map((m) => m[1].trim())
+    .filter(Boolean);
+
+  return {
+    summary: summary ? summary.slice(0, 320) : null,
+    highlights: headingMatches.slice(0, 6),
+  };
+}
+
 /**
  * Helper to get authorization headers if GITHUB_TOKEN is present in env.
  */
@@ -86,9 +137,27 @@ export async function fetchRepoData(owner, repo) {
     // 5. Fetch recent commits (to analyze activity and weekly patterns)
     let commits = [];
     try {
-      commits = await fetchGithub(`${GITHUB_API_BASE}/repos/${cleanOwner}/${cleanRepo}/commits?per_page=50`);
+      commits = await fetchGithub(`${GITHUB_API_BASE}/repos/${cleanOwner}/${cleanRepo}/commits?per_page=100`);
     } catch (err) {
       console.warn("Failed to fetch commits:", err.message);
+    }
+
+    // 6. Fetch README and extract useful summary/highlights for the card
+    let readmeInfo = {
+      summary: null,
+      highlights: [],
+      htmlUrl: null,
+    };
+    try {
+      const readme = await fetchGithub(`${GITHUB_API_BASE}/repos/${cleanOwner}/${cleanRepo}/readme`);
+      const markdown = readme?.content ? decodeBase64Utf8(readme.content) : "";
+      const parsed = extractReadmeInfo(markdown);
+      readmeInfo = {
+        ...parsed,
+        htmlUrl: readme?.html_url || null,
+      };
+    } catch (err) {
+      console.warn("Failed to fetch README:", err.message);
     }
 
     return {
@@ -110,6 +179,9 @@ export async function fetchRepoData(owner, repo) {
           htmlUrl: repoDetails.owner.html_url,
         },
         license: repoDetails.license ? repoDetails.license.spdx_id || repoDetails.license.name : null,
+        readmeSummary: readmeInfo.summary,
+        readmeHighlights: readmeInfo.highlights,
+        readmeUrl: readmeInfo.htmlUrl,
       },
       languages,
       releases: releases.map(r => ({

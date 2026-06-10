@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-export default function CardWrapper({ children, cardRef }) {
+export default function CardWrapper({ children, cardRef, cardWidth = 760 }) {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ scale: 1, height: 450 });
 
@@ -13,7 +13,7 @@ export default function CardWrapper({ children, cardRef }) {
       const containerWidth = containerRef.current.clientWidth;
       const cardHeight = cardRef.current.offsetHeight || cardRef.current.scrollHeight || 450;
 
-      const newScale = containerWidth < 650 ? containerWidth / 650 : 1;
+      const newScale = containerWidth < cardWidth ? containerWidth / cardWidth : 1;
       setDimensions({
         scale: newScale,
         height: cardHeight * newScale,
@@ -34,13 +34,13 @@ export default function CardWrapper({ children, cardRef }) {
       window.removeEventListener("resize", updateDimensions);
       resizeObserver.disconnect();
     };
-  }, [cardRef]);
+  }, [cardRef, cardWidth]);
 
   return (
     <div ref={containerRef} className="w-full flex flex-col justify-start items-center overflow-hidden">
       <div
         style={{
-          width: "650px",
+          width: `${cardWidth}px`,
           height: `${dimensions.height}px`,
           position: "relative",
         }}
@@ -50,7 +50,7 @@ export default function CardWrapper({ children, cardRef }) {
           style={{
             transform: `scale(${dimensions.scale})`,
             transformOrigin: "top center",
-            width: "650px",
+            width: `${cardWidth}px`,
             position: "absolute",
             top: 0,
           }}

@@ -1,6 +1,8 @@
+import { buildCommitTimeline } from "@/lib/commitTimeline";
+
 /**
  * Story Generator for RepoStory
- * Processes GitHub repo data and generates archetypes, timelines, fun facts, and narratives.
+ * Processes GitHub repo data and generates archetypes, timelines, and fun facts.
  */
 
 // Custom rules for archetype detection
@@ -121,7 +123,7 @@ export function analyzeCommitPatterns(commits) {
 
 // Local rules-based narrative generator (fallback)
 export function generateLocalStory(stats, archetype, patterns) {
-  const { name, owner, stars, forks, openIssues } = stats.repoDetails;
+  const { name, owner, stars, forks, readmeSummary } = stats.repoDetails;
   const topLang = Object.keys(stats.languages)[0] || "JavaScript";
   
   let p1 = "";
@@ -153,7 +155,11 @@ export function generateLocalStory(stats, archetype, patterns) {
       p2 = `Driven by consistent ${patterns.dayOfWeek} rhythms, the repository continues to evolve and refine its features, showcasing the beauty of progressive refinement.`;
   }
 
-  return `${p1} ${p2}`;
+  const readmeTail = readmeSummary
+    ? ` README hints at the core mission: ${readmeSummary}`
+    : "";
+
+  return `${p1} ${p2}${readmeTail}`;
 }
 
 // Query Gemini API for AI stories if GITHUB_TOKEN or GEMINI_API_KEY is available
@@ -164,7 +170,7 @@ export async function generateAiStory(stats, archetype, patterns) {
     return generateLocalStory(stats, archetype, patterns);
   }
 
-  const { name, owner, description, stars, forks, openIssues, createdAt } = stats.repoDetails;
+  const { name, owner, description, stars, forks, openIssues, createdAt, readmeSummary, readmeHighlights } = stats.repoDetails;
   const languages = Object.entries(stats.languages)
     .slice(0, 3)
     .map(([lang, bytes]) => `${lang}`)
@@ -187,6 +193,8 @@ Write a 3-4 sentence project story card summary for this GitHub repository:
 - Archetype determined: ${archetype.name} (${archetype.description})
 - Contributor Count: ${numContributors} (Top contributor: @${topContributor})
 - Commits Patterns: ${patterns.timeOfDay} commits (${patterns.nightOwlRatio}% night commits), ${patterns.dayOfWeek} pattern (${patterns.weekendRatio}% weekend commits).
+- README Summary: "${readmeSummary || "N/A"}"
+- README Key Sections: ${Array.isArray(readmeHighlights) && readmeHighlights.length > 0 ? readmeHighlights.join(", ") : "N/A"}
 
 Keep it developer-focused, clean, engaging, and professional yet fun. Do not use generic corporate text. Mention their archetype and commit habits playfully. Avoid markdown symbols in the final output paragraph.
 `;
@@ -248,53 +256,11 @@ export async function analyzeRepository(repoData) {
   // Call AI or Heuristic Story generator
   const story = await generateAiStory(repoData, archetype, commitPatterns);
 
-  // Generate milestone timeline
-  const milestones = [];
-  
-  // Milestone 1: Creation
-  milestones.push({
-    title: "Project Genesis",
-    date: new Date(repoData.repoDetails.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short" }),
-    description: `Repository created by @${repoData.repoDetails.owner.login}.`,
-    type: "birth",
-  });
-
-  // Milestone 2: First Release (if available)
-  if (repoData.releases && repoData.releases.length > 0) {
-    // The list of releases is typically newest first, so reverse to find the oldest/first release
-    const firstRelease = repoData.releases[repoData.releases.length - 1];
-    milestones.push({
-      title: `First Release (${firstRelease.tagName})`,
-      date: new Date(firstRelease.publishedAt).toLocaleDateString("en-US", { year: "numeric", month: "short" }),
-      description: "First public version shipped to the community.",
-      type: "release",
-    });
-  }
-
-  // Milestone 3: Commits checkpoint or recent commits activity
-  if (repoData.commits && repoData.commits.length > 0) {
-    const lastCommit = repoData.commits[0];
-    milestones.push({
-      title: "Active Development",
-      date: new Date(lastCommit.date).toLocaleDateString("en-US", { year: "numeric", month: "short" }),
-      description: `Steady ships. Latest commit message: "${lastCommit.message.split("\n")[0].substring(0, 45)}..."`,
-      type: "commit",
-    });
-  }
-
-  // Milestone 4: Star threshold
-  const starCount = repoData.repoDetails.stars;
-  let starDescription = "Gaining attention on GitHub.";
-  if (starCount >= 10000) starDescription = "Joined the 10k+ stars elite club!";
-  else if (starCount >= 1000) starDescription = "Crossed the 1k+ stars milestone!";
-  else if (starCount >= 100) starDescription = "Crossed the 100+ stars milestone!";
-
-  milestones.push({
-    title: "Community Growth",
-    date: "Present",
-    description: `Reached ${starCount.toLocaleString()} stars and ${repoData.repoDetails.forks.toLocaleString()} forks.`,
-    type: "star",
-  });
+  const milestones = buildCommitTimeline(
+    repoData.commits,
+    repoData.repoDetails,
+    repoData.releases
+  );
 
   return {
     archetype,

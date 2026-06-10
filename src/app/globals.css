@@ -1,26 +1,222 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-commit-bg: #0d1117;
+  --color-commit-border: #30363d;
+  --color-commit-text: #c9d1d9;
+  --color-commit-muted: #8b949e;
+  
+  /* GitHub Commit Green Levels */
+  --color-green-level-0: #121614;
+  --color-green-level-1: #003314;
+  --color-green-level-2: #006629;
+  --color-green-level-3: #00b347;
+  --color-green-level-4: #00ff66;
+  --color-green-glow: rgba(0, 255, 102, 0.15);
+
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+  --font-display: var(--font-geist-sans), sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #030303;
+  --foreground: #ffffff;
+  --accent-green: #00ff66;
+  --accent-green-glow: rgba(0, 255, 102, 0.25);
+  --grid-line: rgba(0, 255, 102, 0.04);
+}
+
+/* Add custom variables for Light Mode */
+[data-theme="light"] {
+  --background: #fafdfb;
+  --foreground: #031008;
+  --accent-green: #00a843;
+  --accent-green-glow: rgba(0, 168, 67, 0.15);
+  --grid-line: rgba(0, 168, 67, 0.04);
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image: 
+    radial-gradient(circle at 50% -20%, rgba(0, 255, 102, 0.05) 0%, rgba(0, 0, 0, 0) 50%),
+    radial-gradient(circle at 50% 120%, rgba(0, 255, 102, 0.08) 0%, rgba(0, 0, 0, 0) 60%);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 102, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-green);
+}
+
+/* Grid background helper */
+.grid-bg {
+  background-image: 
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Glowing animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px var(--accent-green-glow);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(0, 255, 102, 0.45);
+  }
+}
+
+.glow-effect {
+  animation: pulse-glow 3s infinite;
+}
+
+/* Scanline / retro effect */
+.scanlines {
+  position: relative;
+  overflow: hidden;
+}
+.scanlines::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.12) 50%
+  ), linear-gradient(
+    90deg, 
+    rgba(255, 0, 0, 0.03), 
+    rgba(0, 255, 0, 0.01), 
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Smooth Fade-in Entrance */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Staggered entrance animations */
+.animate-fade-in-delay-100 {
+  animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+  opacity: 0;
+}
+.animate-fade-in-delay-200 {
+  animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  opacity: 0;
+}
+.animate-fade-in-delay-300 {
+  animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+  opacity: 0;
+}
+.animate-fade-in-delay-400 {
+  animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+  opacity: 0;
+}
+
+/* Pixelated flickering / blinking animations for grid nodes */
+@keyframes pixel-blink-1 {
+  0%, 100% { opacity: 0.1; filter: brightness(0.6); }
+  50% { opacity: 0.9; filter: brightness(1.3); }
+}
+
+@keyframes pixel-blink-2 {
+  0%, 100% { opacity: 0.8; filter: brightness(1.2); }
+  50% { opacity: 0.25; filter: brightness(0.5); }
+}
+
+@keyframes pixel-blink-3 {
+  0%, 100% { opacity: 0.35; filter: brightness(0.7); }
+  50% { opacity: 0.95; filter: brightness(1.4); }
+}
+
+.animate-pixel-1 {
+  animation: pixel-blink-1 2.5s infinite ease-in-out;
+}
+
+.animate-pixel-2 {
+  animation: pixel-blink-2 3.8s infinite ease-in-out;
+}
+
+.animate-pixel-3 {
+  animation: pixel-blink-3 1.8s infinite ease-in-out;
+}
+
+/* Fade-out animation for the interactive hover trail */
+@keyframes trail-fade {
+  0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+}
+
+.animate-trail-fade {
+  animation: trail-fade 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+/* Fade animation for transition pixel trail */
+@keyframes transition-pixel-fade {
+  0% { opacity: 0; transform: scale(0.3); }
+  20% { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+
+.animate-trans-pixel {
+  animation: transition-pixel-fade 0.3s ease-in-out forwards;
+}
+
+/* Force hide standard browser cursor on the body and all elements on large screens */
+@media (min-width: 1024px) {
+  body,
+  body * {
+    cursor: none !important;
+  }
+}
+

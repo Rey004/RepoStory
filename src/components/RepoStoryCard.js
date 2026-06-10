@@ -187,7 +187,7 @@ export default function RepoStoryCard({ data, cardRef, isLightMode = false }) {
     <div 
       ref={cardRef}
       id="repo-story-card"
-      className={`w-full max-w-[650px] p-6 rounded-xl border shadow-2xl relative overflow-hidden transition-all duration-300 ${bgMain}`}
+      className={`w-[650px] shrink-0 p-6 rounded-xl border shadow-2xl relative overflow-hidden transition-all duration-300 ${bgMain}`}
     >
       {/* Decorative Matrix Scanline effect on card (only in dark mode) */}
       {!isLightMode && (
@@ -201,7 +201,7 @@ export default function RepoStoryCard({ data, cardRef, isLightMode = false }) {
       <div className={`absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 ${isLightMode ? "border-zinc-300" : "border-zinc-800"}`} />
 
       {/* Header section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 mb-5 border-b border-zinc-800/80">
+      <div className="flex justify-between items-center gap-4 pb-5 mb-5 border-b border-zinc-800/80">
         <div className="flex items-center gap-3">
           {/* Avatar without glow */}
           <img 
@@ -247,10 +247,10 @@ export default function RepoStoryCard({ data, cardRef, isLightMode = false }) {
       </div>
 
       {/* Main Grid: Description & Highlights left, Timeline & Stack right */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-5 gap-6">
         
         {/* Left Column: Story, Commit Grid, and Fun Facts (3/5 width) */}
-        <div className="md:col-span-3 flex flex-col gap-4">
+        <div className="col-span-3 flex flex-col gap-4">
           
           {/* AI Story Section */}
           <div className={`p-4 rounded-lg border relative ${bgSubCard}`}>
@@ -305,7 +305,7 @@ export default function RepoStoryCard({ data, cardRef, isLightMode = false }) {
         </div>
 
         {/* Right Column: Timeline & Languages (2/5 width) */}
-        <div className="md:col-span-2 flex flex-col gap-4">
+        <div className="col-span-2 flex flex-col gap-4">
           
           {/* Languages Stack */}
           <div className={`p-4 rounded-lg border ${bgSubCard}`}>

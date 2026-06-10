@@ -37,16 +37,20 @@
   --grid-line: rgba(0, 168, 67, 0.04);
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   background-color: var(--background);
-  background-image: 
-    radial-gradient(circle at 50% -20%, rgba(0, 255, 102, 0.05) 0%, rgba(0, 0, 0, 0) 50%),
-    radial-gradient(circle at 50% 120%, rgba(0, 255, 102, 0.08) 0%, rgba(0, 0, 0, 0) 60%);
-  background-attachment: fixed;
+  background-image: radial-gradient(
+    circle at 50% -20%,
+    rgba(0, 255, 102, 0.05) 0%,
+    rgba(0, 0, 0, 0) 50%
+  );
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-x: hidden;
 }
 
 /* Custom Scrollbar */
@@ -164,18 +168,18 @@ body {
 
 /* Pixelated flickering / blinking animations for grid nodes */
 @keyframes pixel-blink-1 {
-  0%, 100% { opacity: 0.1; filter: brightness(0.6); }
-  50% { opacity: 0.9; filter: brightness(1.3); }
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.75; }
 }
 
 @keyframes pixel-blink-2 {
-  0%, 100% { opacity: 0.8; filter: brightness(1.2); }
-  50% { opacity: 0.25; filter: brightness(0.5); }
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0.2; }
 }
 
 @keyframes pixel-blink-3 {
-  0%, 100% { opacity: 0.35; filter: brightness(0.7); }
-  50% { opacity: 0.95; filter: brightness(1.4); }
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.85; }
 }
 
 .animate-pixel-1 {
@@ -190,15 +194,7 @@ body {
   animation: pixel-blink-3 1.8s infinite ease-in-out;
 }
 
-/* Fade-out animation for the interactive hover trail */
-@keyframes trail-fade {
-  0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-}
 
-.animate-trail-fade {
-  animation: trail-fade 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-}
 
 /* Fade animation for transition pixel trail */
 @keyframes transition-pixel-fade {
@@ -217,6 +213,101 @@ body {
   body,
   body * {
     cursor: none !important;
+  }
+}
+
+/* Cursor effects — fixed to viewport, clipped so glow can't inflate scroll height */
+.cursor-effects-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 9998;
+  contain: strict;
+}
+
+/* Cursor-following glow — compositor-only transform updates */
+.cursor-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(0, 255, 102, 0.14) 0%,
+    rgba(0, 255, 102, 0.06) 30%,
+    rgba(0, 255, 102, 0.02) 55%,
+    transparent 72%
+  );
+  opacity: 0;
+  will-change: transform, opacity;
+  contain: strict;
+  transition: opacity 0.35s ease-out;
+  transform: translate3d(-9999px, -9999px, 0) translate(-50%, -50%);
+}
+.cursor-glow[data-active="true"] {
+  opacity: 1;
+}
+
+/* Custom cursor — toggled via data attribute to avoid React re-renders on mousemove */
+.custom-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.custom-cursor-dot,
+.custom-cursor-arrow {
+  transition: opacity 0.15s ease-out;
+}
+.custom-cursor-dot {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+.custom-cursor-arrow {
+  opacity: 0;
+}
+.custom-cursor-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out;
+  will-change: transform;
+  opacity: 1;
+}
+[data-cursor-hover="true"] .custom-cursor-dot {
+  opacity: 0;
+}
+[data-cursor-hover="true"] .custom-cursor-arrow {
+  opacity: 1;
+}
+[data-cursor-hover="true"] .custom-cursor-box {
+  opacity: 0;
+}
+
+/* Isolate expensive background layers from the rest of the page */
+.bg-effects-layer {
+  contain: strict;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pixel-1,
+  .animate-pixel-2,
+  .animate-pixel-3,
+  .animate-trans-pixel,
+  .animate-fade-in,
+  .animate-fade-in-delay-100,
+  .animate-fade-in-delay-200,
+  .animate-fade-in-delay-300,
+  .animate-fade-in-delay-400,
+  .animate-slide-down {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
 

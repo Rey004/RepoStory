@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { 
-  Zap, 
   ArrowLeft, 
   Terminal, 
   AlertCircle,
-  ArrowRight,
   Sparkles,
   Heart
 } from "lucide-react";
@@ -21,14 +19,6 @@ const GithubIcon = ({ className = "w-5 h-5" }) => (
   </svg>
 );
 
-// Demo options for quick testing
-const DEMO_REPOS = [
-  { name: "React", url: "https://github.com/facebook/react" },
-  { name: "Next.js", url: "https://github.com/vercel/next.js" },
-  { name: "zx", url: "https://github.com/google/zx" },
-  { name: "Tailwind CSS", url: "https://github.com/tailwindlabs/tailwindcss" },
-];
-
 // Steps to simulate in the terminal loading view
 const LOADING_STEPS = [
   "Establishing secure connection to api.github.com...",
@@ -42,52 +32,14 @@ const LOADING_STEPS = [
   "Finalizing visual story card assembly...",
   "Story compiled successfully!"
 ];
-// Pre-defined 8x8 random grid layout pattern for the hover-activated pixel squares (values 1, 2, 3 correspond to animation types, 0 is empty)
-const HOVER_GRID_PATTERN = [
-  0, 1, 0, 0, 3, 0, 0, 2,
-  2, 0, 1, 0, 0, 3, 0, 0,
-  0, 0, 0, 2, 0, 0, 1, 0,
-  3, 0, 2, 0, 0, 1, 0, 3,
-  0, 1, 0, 0, 3, 0, 0, 0,
-  0, 0, 2, 0, 0, 1, 0, 2,
-  1, 0, 0, 3, 0, 0, 2, 0,
-  0, 3, 0, 0, 1, 0, 0, 3
-];
+const PixelGlowBackground = ({ randomPixels = [] }) => (
+  <div className="bg-effects-layer absolute inset-0 overflow-hidden pointer-events-none z-0">
+    <div className="absolute inset-0 grid-bg opacity-20" />
+    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.9)_3px,transparent_3px),linear-gradient(to_bottom,rgba(0,0,0,0.9)_3px,transparent_3px)] bg-[size:6px_6px] opacity-20" />
 
-const PixelGlowBackground = ({ trail = [], randomPixels = [] }) => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-    {/* 1. Faint ambient background grid */}
-    <div className="absolute inset-0 grid-bg opacity-20 z-0" />
-
-    {/* 2. Interactive Spotlight Glow following the cursor */}
-    <div 
-      className="absolute inset-0 pointer-events-none z-10 opacity-80"
-      style={{
-        background: `radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 255, 102, 0.1) 0%, rgba(0, 255, 102, 0.02) 50%, transparent 100%)`
-      }}
-    />
-
-    {/* 3. Interactive Neon Grid Hover Highlight */}
-    <div 
-      className="absolute inset-0 grid-bg pointer-events-none z-10 opacity-80"
-      style={{
-        WebkitMaskImage: `radial-gradient(280px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black 10%, transparent 100%)`,
-        maskImage: `radial-gradient(280px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black 10%, transparent 100%)`,
-        filter: "drop-shadow(0 0 6px rgba(0, 255, 102, 0.4))",
-        backgroundImage: `
-          linear-gradient(to right, rgba(0, 255, 102, 0.15) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(0, 255, 102, 0.15) 1px, transparent 1px)
-        `
-      }}
-    />
-    
-    {/* 4. Fine Digital Pixel Grid Mask for CRT/terminal texture */}
-    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.9)_3px,transparent_3px),linear-gradient(to_bottom,rgba(0,0,0,0.9)_3px,transparent_3px)] bg-[size:6px_6px] opacity-30 z-20" />
-    
-    {/* Glowing scattered ambient random active pixel groups to cover side empty spaces */}
     <div className="absolute inset-0 pointer-events-none">
       {randomPixels.map((group) => (
-        <div 
+        <div
           key={group.id}
           className="absolute pointer-events-none select-none"
           style={{
@@ -98,28 +50,79 @@ const PixelGlowBackground = ({ trail = [], randomPixels = [] }) => (
         >
           <div className="grid grid-cols-3 gap-1">
             {group.pixels.map((p, idx) => (
-              <div 
-                key={idx}
-                className={`w-3 h-3 bg-[#00ff66] shadow-[0_0_10px_#00ff66] animate-pixel-${p.animType} transition-opacity duration-300 ${p.visible ? 'opacity-100' : 'opacity-0'}`}
-              />
+              p.visible ? (
+                <div
+                  key={idx}
+                  className={`w-3 h-3 bg-[#00ff66] animate-pixel-${p.animType}`}
+                />
+              ) : null
             ))}
           </div>
         </div>
       ))}
-      {/* Fading interactive trail: renders single pixel sparks following cursor */}
-      {trail.map((p) => (
-        <div 
-          key={p.id}
-          className={`absolute pointer-events-none select-none z-10 animate-trail-fade w-2 h-2 bg-[#00ff66] shadow-[0_0_8px_#00ff66] animate-pixel-${p.animType}`}
-          style={{
-            left: `${p.x}px`,
-            top: `${p.y}px`,
-          }}
-        />
-      ))}
     </div>
   </div>
 );
+
+const CardWrapper = ({ children, cardRef }) => {
+  const containerRef = useRef(null);
+  const [dimensions, setDimensions] = useState({ scale: 1, height: 450 });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (!containerRef.current || !cardRef.current) return;
+      
+      const containerWidth = containerRef.current.clientWidth;
+      const cardHeight = cardRef.current.offsetHeight || cardRef.current.scrollHeight || 450;
+      
+      const newScale = containerWidth < 650 ? containerWidth / 650 : 1;
+      setDimensions({
+        scale: newScale,
+        height: cardHeight * newScale
+      });
+    };
+
+    const timer = setTimeout(updateDimensions, 100);
+
+    window.addEventListener("resize", updateDimensions);
+    
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    if (cardRef.current) {
+      resizeObserver.observe(cardRef.current);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", updateDimensions);
+      resizeObserver.disconnect();
+    };
+  }, [cardRef]);
+
+  return (
+    <div ref={containerRef} className="w-full flex flex-col justify-start items-center overflow-hidden">
+      <div 
+        style={{
+          width: "650px",
+          height: `${dimensions.height}px`,
+          position: "relative",
+        }}
+        className="flex justify-center items-start"
+      >
+        <div 
+          style={{
+            transform: `scale(${dimensions.scale})`,
+            transformOrigin: "top center",
+            width: "650px",
+            position: "absolute",
+            top: 0,
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -130,16 +133,29 @@ export default function Home() {
   const [isLightMode, setIsLightMode] = useState(false);
   const [isCut, setIsCut] = useState(false);
   const [showPixels, setShowPixels] = useState(false);
-  const [trail, setTrail] = useState([]); // State to track pixel trail
   const [transitionPixels, setTransitionPixels] = useState([]); // State for random text morph transition pixels
   const [randomPixels, setRandomPixels] = useState([]); // State for scattered ambient background pixels
-  const [isHovering, setIsHovering] = useState(false);
 
   const cardRef = useRef(null);
+  const rootRef = useRef(null);
+  const glowRef = useRef(null);
+  const cursorRef = useRef(null);
+  const cursorBoxRef = useRef(null);
+  const mouseRafRef = useRef(null);
+  const isHoveringRef = useRef(false);
+  const pendingMouseRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (mouseRafRef.current) {
+        cancelAnimationFrame(mouseRafRef.current);
+      }
+    };
+  }, []);
 
   // Generate random background pixel groups on mount
   useEffect(() => {
-    const groups = Array.from({ length: 16 }).map((_, idx) => {
+    const groups = Array.from({ length: 8 }).map((_, idx) => {
       // Alternate between left and right sides of the page
       const isLeft = idx % 2 === 0;
       const leftVal = isLeft 
@@ -163,68 +179,63 @@ export default function Home() {
     setRandomPixels(groups);
   }, []);
 
-  // Cleanup hook for the interactive hover trail
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      setTrail((prev) => {
-        const filtered = prev.filter((p) => now - p.createdAt < 800);
-        if (filtered.length === prev.length) return prev;
-        return filtered;
-      });
-    }, 100);
-    return () => clearInterval(interval);
+
+
+  const handleMouseMove = useCallback((e) => {
+    pendingMouseRef.current = e;
+
+    if (mouseRafRef.current) return;
+
+    mouseRafRef.current = requestAnimationFrame(() => {
+      mouseRafRef.current = null;
+      const event = pendingMouseRef.current;
+      if (!event || !rootRef.current) return;
+
+      const x = event.clientX;
+      const y = event.clientY;
+      const position = `translate3d(${x}px, ${y}px, 0)`;
+
+      if (glowRef.current) {
+        glowRef.current.style.transform = `${position} translate(-50%, -50%)`;
+        glowRef.current.dataset.active = "true";
+      }
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = position;
+      }
+      if (cursorBoxRef.current) {
+        cursorBoxRef.current.style.transform = `${position} translate(-50%, -50%)`;
+      }
+
+      const target = event.target;
+      const isInteractive = !!(
+        target?.closest("a") ||
+        target?.closest("button") ||
+        target?.closest("[role='button']") ||
+        target?.closest(".cursor-pointer") ||
+        target?.closest("input") ||
+        target?.closest("select")
+      );
+
+      if (isInteractive !== isHoveringRef.current) {
+        isHoveringRef.current = isInteractive;
+        rootRef.current.dataset.cursorHover = isInteractive ? "true" : "false";
+      }
+    });
   }, []);
 
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Snap to grid cells for neon grid highlights
-    const gridX = Math.floor(x / 24) * 24 + 12;
-    const gridY = Math.floor(y / 24) * 24 + 12;
-    
-    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
-    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
-    e.currentTarget.style.setProperty("--mouse-grid-x", `${gridX}px`);
-    e.currentTarget.style.setProperty("--mouse-grid-y", `${gridY}px`);
-
-    // Detect if mouse is hovering over interactive elements
-    const target = e.target;
-    const isInteractive = target && (
-      target.closest("a") || 
-      target.closest("button") || 
-      target.closest("[role='button']") || 
-      target.closest(".cursor-pointer") ||
-      target.closest("input") ||
-      target.closest("select")
-    );
-    setIsHovering(!!isInteractive);
-
-    // Add trail coordinate if mouse has moved at least 20px from the last saved coordinate
-    setTrail((prev) => {
-      const last = prev[prev.length - 1];
-      if (last) {
-        const dx = x - last.x;
-        const dy = y - last.y;
-        if (Math.sqrt(dx * dx + dy * dy) < 20) {
-          return prev;
-        }
-      }
-      
-      const newPixel = {
-        id: Math.random().toString(),
-        x, // Smooth un-snapped coordinates for fluid trail path
-        y,
-        createdAt: Date.now(),
-        animType: Math.floor(Math.random() * 3) + 1,
-      };
-
-      // Keep up to 12 trail nodes for performance
-      return [...prev.slice(-11), newPixel];
-    });
-  };
+  const handleMouseLeave = useCallback(() => {
+    if (mouseRafRef.current) {
+      cancelAnimationFrame(mouseRafRef.current);
+      mouseRafRef.current = null;
+    }
+    isHoveringRef.current = false;
+    if (rootRef.current) {
+      rootRef.current.dataset.cursorHover = "false";
+    }
+    if (glowRef.current) {
+      glowRef.current.dataset.active = "false";
+    }
+  }, []);
 
   // One-time text-morph pixelated transition animation on mount using random trail logic
   useEffect(() => {
@@ -237,16 +248,17 @@ export default function Home() {
       spawnInterval = setInterval(() => {
         setTransitionPixels((prev) => {
           const now = Date.now();
-          const newPixels = Array.from({ length: 8 }).map(() => ({
+          const newPixels = Array.from({ length: 3 }).map(() => ({
             id: Math.random().toString(),
             col: Math.floor(Math.random() * 40),
             row: Math.floor(Math.random() * 10),
-            isGreen: Math.random() > 0.45, // 55% green, 45% dark gray
+            isGreen: Math.random() > 0.45,
             createdAt: now,
           }));
-          return [...prev.filter((p) => now - p.createdAt < 300), ...newPixels];
+          const filtered = prev.filter((p) => now - p.createdAt < 300);
+          return [...filtered, ...newPixels].slice(-24);
         });
-      }, 10);
+      }, 50);
     }, 400);
 
     // Swap text at 700ms (when pixel density is highest)
@@ -331,11 +343,6 @@ export default function Home() {
     fetchRepoStory();
   };
 
-  const handleDemoClick = (url) => {
-    setRepoUrl(url);
-    fetchRepoStory(url);
-  };
-
   const handleReset = () => {
     setStoryData(null);
     setRepoUrl("");
@@ -343,73 +350,60 @@ export default function Home() {
   };
 
   return (
-    <div 
+    <div
+      ref={rootRef}
+      data-cursor-hover="false"
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => setIsHovering(false)}
-      className="flex-1 flex flex-col min-h-screen bg-black text-white relative font-sans select-none overflow-y-auto lg:cursor-none"
+      onMouseLeave={handleMouseLeave}
+      className="flex flex-col flex-1 min-h-dvh bg-black text-white relative font-sans select-none lg:cursor-none"
     >
-      {/* Custom High-Tech Cursor (Dot or Arrow + Lagging Outlined Box) */}
-      <div 
-        className="hidden lg:block absolute pointer-events-none z-[9999]"
-        style={{
-          left: 'var(--mouse-x, 0px)',
-          top: 'var(--mouse-y, 0px)',
-          transform: isHovering ? 'translate(0px, 0px)' : 'translate(-50%, -50%)',
-        }}
+      {/* Cursor effects — fixed + clipped to viewport so glow never extends scroll height */}
+      <div
+        className="cursor-effects-layer hidden lg:block"
+        aria-hidden="true"
       >
-        <div className="transition-all duration-200 ease-out">
-          {isHovering ? (
-            <svg 
-              className="w-[18px] h-[18px] text-[#00ff66]" 
-              viewBox="0 0 24 24" 
-              fill="currentColor"
-              style={{ filter: "drop-shadow(0 0 5px rgba(0, 255, 102, 0.7))" }}
-            >
-              <path d="M0 0v16l4.5-4.5 3.5 7 2.5-1.5-3.5-7H12Z" />
-            </svg>
-          ) : (
-            <div className="w-1.5 h-1.5 bg-[#00ff66] shadow-[0_0_8px_#00ff66]" />
-          )}
+        <div
+          ref={glowRef}
+          data-active="false"
+          className="cursor-glow"
+        />
+        <div ref={cursorRef} className="custom-cursor">
+          <div className="custom-cursor-dot absolute w-1.5 h-1.5 bg-[#00ff66]" />
+          <svg
+            className="custom-cursor-arrow absolute w-[18px] h-[18px]"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <path
+              d="M0 0v16l4.5-4.5 3.5 7 2.5-1.5-3.5-7H12Z"
+              fill="#00ff66"
+              stroke="#000000"
+              strokeWidth="1.75"
+              strokeLinejoin="round"
+            />
+          </svg>
         </div>
+        <div
+          ref={cursorBoxRef}
+          className="custom-cursor-box w-6 h-6 border"
+          style={{ borderColor: "rgba(0, 255, 102, 0.35)" }}
+        />
       </div>
-      <div 
-        className="hidden lg:block absolute pointer-events-none z-[9999] w-6 h-6 border transition-[left,top,transform,opacity] duration-[90ms,90ms,200ms,200ms] ease-out"
-        style={{
-          left: 'var(--mouse-x, 0px)',
-          top: 'var(--mouse-y, 0px)',
-          transform: `translate(-50%, -50%) scale(${isHovering ? 0 : 1})`,
-          opacity: isHovering ? 0 : 1,
-          borderColor: 'rgba(0, 255, 102, 0.35)',
-        }}
-      />
-      {/* Pixelated Green Grid Background */}
-      <PixelGlowBackground trail={trail} randomPixels={randomPixels} />
+
+      <PixelGlowBackground randomPixels={randomPixels} />
 
       {/* Viewport-Aligned Sidebar Decorators (Landing page only) */}
       {!storyData && (
         <>
-          {/* Viewport Side Ambient Green Glow Auras (Permanently Visible, subtle at the extreme edges) */}
-          <div className="absolute left-0 top-1/6 bottom-1/6 w-32 md:w-72 bg-gradient-to-r from-[#00ff66]/22 via-[#00ff66]/5 to-transparent blur-[70px] md:blur-[90px] pointer-events-none z-0" id="left-ambient-glow" />
-          <div className="absolute right-0 top-1/6 bottom-1/6 w-32 md:w-72 bg-gradient-to-l from-[#00ff66]/22 via-[#00ff66]/5 to-transparent blur-[70px] md:blur-[90px] pointer-events-none z-0" id="right-ambient-glow" />
+          <div className="absolute left-0 top-1/6 bottom-1/6 w-24 md:w-48 bg-gradient-to-r from-[#00ff66]/18 to-transparent blur-3xl pointer-events-none z-0" />
+          <div className="absolute right-0 top-1/6 bottom-1/6 w-24 md:w-48 bg-gradient-to-l from-[#00ff66]/18 to-transparent blur-3xl pointer-events-none z-0" />
 
-          {/* Top Conical Spotlight Beam (Shining down from the ceiling) */}
-          {/* Ceiling source light flare */}
-          <div className="absolute top-[-50px] left-1/2 -translate-x-1/2 w-[400px] h-16 bg-white/10 blur-[25px] rounded-full pointer-events-none z-10" />
-          
-          {/* Volumetric spotlight cone */}
-          <div 
-            className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[1400px] h-[750px] pointer-events-none z-0"
+          <div
+            className="absolute top-[-80px] left-1/2 -translate-x-1/2 w-[900px] h-[500px] pointer-events-none z-0"
             style={{
-              background: `conic-gradient(from 140deg at 50% 0%, transparent 0deg, rgba(0, 255, 102, 0.08) 20deg, rgba(0, 255, 102, 0.08) 60deg, transparent 80deg)`,
-              filter: 'blur(60px)',
-              maskImage: 'linear-gradient(to bottom, black 0%, rgba(0,0,0,0.85) 45%, transparent 100%)',
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, rgba(0,0,0,0.85) 45%, transparent 100%)'
+              background: `radial-gradient(ellipse at 50% 0%, rgba(0, 255, 102, 0.12) 0%, transparent 65%)`,
             }}
           />
-          
-          {/* Soft ambient background glow behind the beam */}
-          <div className="absolute -top-[250px] left-1/2 -translate-x-1/2 w-[1100px] h-[650px] bg-[#00ff66]/5 blur-[130px] rounded-full pointer-events-none z-0" />
-          <div className="absolute -top-[200px] left-1/2 -translate-x-1/2 w-[750px] h-[480px] bg-white/2.5 blur-[110px] rounded-full pointer-events-none z-0" />
 
 
         </>
@@ -446,7 +440,7 @@ export default function Home() {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 flex flex-col justify-center items-center relative z-10 px-6 py-12 max-w-6xl w-full mx-auto">
+      <main className="flex flex-col flex-1 justify-center items-center relative z-10 px-6 py-12 max-w-6xl w-full mx-auto min-h-0">
         
         {/* State 1: Search Form & Intro */}
         {!isLoading && !storyData && (
@@ -456,13 +450,13 @@ export default function Home() {
             <div className="flex flex-col items-center gap-4 w-full">
               
               {/* Brand tagline pill (Glassmorphism, minimal border, no glow) */}
-              <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md text-[#00ff66] text-xs w-fit mx-auto animate-fade-in">
+              <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.04] text-[#00ff66] text-xs w-fit mx-auto animate-fade-in">
                 <Sparkles className="w-3.5 h-3.5 text-[#00ff66]" />
                 <span>Transform Repos into Social Story Cards</span>
               </div>
 
               {/* Slicing Brand Text Morph (Repository -> RepoStory) - Minimal, less weight, no glow */}
-              <div className="text-6xl md:text-7xl lg:text-8xl font-light font-display text-center tracking-tight select-none animate-fade-in-delay-100">
+              <div className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-light font-display text-center tracking-tight select-none animate-fade-in-delay-100">
                 <span className="relative inline-grid grid-cols-1 grid-rows-1 justify-items-center items-center px-4 py-1">
                   {/* Repository text */}
                   <span 
@@ -504,23 +498,23 @@ export default function Home() {
 
               {/* URL Input Form (Rounded Full, no glow shadow) */}
               <form onSubmit={handleSubmit} className="w-full max-w-lg mx-auto my-2 animate-fade-in-delay-200">
-                <div className="relative group rounded-full bg-zinc-950 border border-zinc-850 focus-within:border-[#00ff66] transition-all p-1 flex items-center gap-2 pl-4 pr-1 shadow-none w-full">
-                  <div className="flex-1 flex items-center gap-2">
+                <div className="relative group rounded-3xl sm:rounded-full bg-zinc-950 border border-zinc-850 focus-within:border-[#00ff66] transition-all p-1.5 sm:p-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pl-3 sm:pl-4 pr-1.5 sm:pr-1 shadow-none w-full">
+                  <div className="flex-1 flex items-center gap-2 py-1 sm:py-0">
                     <GithubIcon className="w-4 h-4 text-zinc-550 shrink-0" />
                     <input
                       id="repo-url-input"
                       type="text"
                       value={repoUrl}
                       onChange={(e) => setRepoUrl(e.target.value)}
-                      placeholder="Paste GitHub Repository URL (e.g. facebook/react)"
-                      className="flex-1 bg-transparent text-xs focus:outline-none placeholder-zinc-650 py-2 text-white"
+                      placeholder="GitHub repository URL (e.g. facebook/react)"
+                      className="flex-1 bg-transparent text-xs focus:outline-none placeholder-zinc-650 py-1.5 sm:py-2 text-white"
                       required
                     />
                   </div>
                   <GenerateButton
                     id="generate-btn"
                     isGenerating={isLoading}
-                    className="shrink-0 scale-95"
+                    className="shrink-0 scale-95 sm:scale-100"
                   />
                 </div>
 
@@ -536,9 +530,7 @@ export default function Home() {
               {/* Description & Pipeline Layout Split */}
               <div className="w-full max-w-4xl mx-auto flex flex-col lg:flex-row gap-6 items-stretch mt-2 animate-fade-in-delay-300">
                 {/* Description of what the tool does */}
-                <div className="flex-1 border border-zinc-900/50 rounded-lg bg-zinc-950/5 backdrop-blur-sm hover:bg-zinc-950/40 hover:backdrop-blur-xl hover:border-zinc-800/80 p-4.5 font-sans text-xs text-zinc-400 flex flex-col justify-center text-left relative overflow-hidden shadow-sm transition-all duration-500 ease-out">
-                  {/* Subtle decorative glow */}
-                  <div className="absolute -left-16 -top-16 w-32 h-32 bg-[#00ff66]/5 blur-2xl rounded-full pointer-events-none" />
+                <div className="flex-1 border border-zinc-900/50 rounded-lg bg-zinc-950/20 hover:bg-zinc-950/40 hover:border-zinc-800/80 p-4.5 font-sans text-xs text-zinc-400 flex flex-col justify-center text-left relative overflow-hidden shadow-sm transition-colors duration-300">
                   
                   <div className="space-y-4 relative z-10">
                     <h3 className="text-xs font-semibold text-white uppercase tracking-widest flex items-center gap-1.5 font-mono">
@@ -559,7 +551,7 @@ export default function Home() {
                 </div>
 
                 {/* Unique Techy Hero Status Layout */}
-                <div className="flex-1 border border-zinc-900/50 rounded-lg bg-zinc-950/5 backdrop-blur-sm hover:bg-zinc-950/40 hover:backdrop-blur-xl hover:border-zinc-800/80 p-4.5 font-mono text-[11px] text-zinc-400 text-left relative overflow-hidden shadow-sm flex flex-col justify-between transition-all duration-500 ease-out">
+                <div className="flex-1 border border-zinc-900/50 rounded-lg bg-zinc-950/20 hover:bg-zinc-950/40 hover:border-zinc-800/80 p-4.5 font-mono text-[11px] text-zinc-400 text-left relative overflow-hidden shadow-sm flex flex-col justify-between transition-colors duration-300">
                   <div>
                     {/* Console header */}
                     <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-zinc-900/60">
@@ -592,24 +584,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Quick Demo Repositories (Rounded-Full Buttons) */}
-            <div className="flex flex-col gap-3.5 w-full pt-4 animate-fade-in-delay-400">
-              <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-600 font-bold">
-                Or pick a classic repository:
-              </span>
-              <div className="flex flex-wrap justify-center gap-2">
-                {DEMO_REPOS.map((demo) => (
-                  <button
-                    key={demo.name}
-                    id={`demo-btn-${demo.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
-                    onClick={() => handleDemoClick(demo.url)}
-                    className="px-4 py-2 rounded-full border border-zinc-850 text-xs font-mono bg-zinc-950 text-zinc-400 hover:text-white hover:border-[#00ff66]/50 hover:bg-[#00ff66]/5 transition-all cursor-pointer"
-                  >
-                    {demo.name}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 
@@ -662,7 +636,7 @@ export default function Home() {
         {!isLoading && storyData && (
           <div className="w-full flex flex-col gap-6 animate-fade-in">
             {/* Back action */}
-            <div className="flex justify-between items-center border-b border-zinc-950 pb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-950 pb-4">
               <button
                 id="back-to-input-btn"
                 onClick={handleReset}
@@ -680,12 +654,14 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
               
               {/* Card Workspace (Takes 2 columns on large screens) */}
-              <div className="lg:col-span-2 flex justify-center py-2 relative">
-                <RepoStoryCard 
-                  data={storyData} 
-                  cardRef={cardRef} 
-                  isLightMode={isLightMode} 
-                />
+              <div className="lg:col-span-2 flex justify-center py-2 relative w-full overflow-hidden">
+                <CardWrapper cardRef={cardRef}>
+                  <RepoStoryCard 
+                    data={storyData} 
+                    cardRef={cardRef} 
+                    isLightMode={isLightMode} 
+                  />
+                </CardWrapper>
               </div>
 
               {/* Customize & Actions panel */}
@@ -705,7 +681,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-900 bg-black/40 py-6 mt-auto text-xs font-mono text-zinc-400 relative z-10">
+      <footer className="border-t border-zinc-900 bg-black py-6 mt-auto shrink-0 text-xs font-mono text-zinc-400 relative z-10">
         <div className="max-w-7xl mx-auto px-6 sm:px-12 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 RepoStory.</p>
           <p className="flex items-center gap-1.5 text-zinc-400">

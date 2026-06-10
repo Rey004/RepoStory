@@ -13,9 +13,8 @@ export function GenerateButton({
   const [isFocused, setIsFocused] = useState(false);
   
   const isGenerating = controlledIsGenerating !== undefined ? controlledIsGenerating : isFocused;
-
   return (
-    <div className="relative inline-block group">
+    <div className="relative inline-block group w-full sm:w-auto">
       <style>{`
         .gen-btn {
           --border-radius: 9999px;
@@ -27,6 +26,7 @@ export function GenerateButton({
           justify-content: center;
           align-items: center;
           padding: 0.6rem 1.4rem;
+          width: 100%;
           font-family: var(--font-sans), sans-serif;
           font-size: 0.75rem;
           font-weight: 700;

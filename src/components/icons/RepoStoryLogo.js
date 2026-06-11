@@ -10,7 +10,6 @@ export default function RepoStoryLogo({ className = "w-7 h-7" }) {
         stroke="currentColor"
         strokeWidth="2.5"
         fill="none"
-        style={{ filter: "drop-shadow(0 0 5px rgba(0, 255, 102, 0.5))" }}
       />
       <rect x="13" y="13" width="6" height="6" fill="currentColor" />
     </svg>

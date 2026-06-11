@@ -11,7 +11,7 @@ function LanguageIcon({ name, isLightMode }) {
   if (failed) {
     return (
       <Code2
-        className={`w-3.5 h-3.5 shrink-0 ${isLightMode ? "text-emerald-700" : "text-[#00ff66]"}`}
+        className={`w-3.5 h-3.5 shrink-0 ${isLightMode ? "text-emerald-700" : "text-green-level-4"}`}
       />
     );
   }
@@ -26,15 +26,17 @@ function LanguageIcon({ name, isLightMode }) {
   );
 }
 
-export default function TechStackPills({ languageList, isLightMode }) {
+export default function TechStackPills({ languageList, isLightMode, showLabel = true }) {
   return (
     <div className="relative z-10">
-      <div className="flex items-center gap-2 mb-2.5">
-        <span className={`text-[10px] uppercase font-mono tracking-widest ${isLightMode ? "text-emerald-700" : "text-[#00ff66]"}`}>
-          // tech.stack
-        </span>
-        <div className={`flex-1 h-px ${isLightMode ? "bg-zinc-200" : "bg-[#00ff66]/20"}`} />
-      </div>
+      {showLabel && (
+        <div className="flex items-center gap-2 mb-2.5">
+          <span className={`text-[10px] uppercase font-mono tracking-widest ${isLightMode ? "text-emerald-700" : "text-green-level-4"}`}>
+            // tech.stack
+          </span>
+          <div className={`flex-1 h-px ${isLightMode ? "bg-zinc-200" : "bg-green-level-4/20"}`} />
+        </div>
+      )}
 
       {languageList.length > 0 ? (
         <div className="flex flex-wrap gap-2">
@@ -44,12 +46,12 @@ export default function TechStackPills({ languageList, isLightMode }) {
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-mono transition-colors ${
                 isLightMode
                   ? "bg-white border-zinc-200 text-zinc-700 hover:border-emerald-300"
-                  : "bg-zinc-950/80 border-zinc-800 text-zinc-300 hover:border-[#00ff66]/40"
+                  : "bg-zinc-950/80 border-zinc-800 text-zinc-300 hover:border-green-level-4/40"
               }`}
             >
               <LanguageIcon name={lang.name} isLightMode={isLightMode} />
               <span>{lang.name}</span>
-              <span className={isLightMode ? "text-emerald-600" : "text-[#00ff66]/80"}>
+              <span className={isLightMode ? "text-emerald-600" : "text-green-level-4/80"}>
                 {lang.percentage}%
               </span>
             </span>

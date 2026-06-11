@@ -1,3 +1,5 @@
+import GithubIcon from "@/components/icons/GithubIcon";
+
 export default function CardFooter({ isLightMode }) {
   return (
     <div
@@ -16,13 +18,21 @@ export default function CardFooter({ isLightMode }) {
           <rect x="6" y="6" width="20" height="20" rx="3" stroke="currentColor" strokeWidth="2.5" fill="none" />
           <rect x="13" y="13" width="6" height="6" fill="currentColor" />
         </svg>
-        <span className={`font-semibold ${isLightMode ? "text-zinc-600" : "text-zinc-400"}`}>
+        <span className={`font-semibold ${isLightMode ? "text-zinc-650" : "text-zinc-400"}`}>
           Made with RepoStory
         </span>
       </span>
-      <span className={`text-[9px] uppercase tracking-widest ${isLightMode ? "text-zinc-400" : "text-zinc-600"}`}>
-        compiled.card
-      </span>
+      <a
+        href="https://github.com/Rey004/RepoStory"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`flex items-center gap-2 text-[12px] font-mono tracking-wide hover:underline transition-colors ${
+          isLightMode ? "text-zinc-500 hover:text-zinc-700" : "text-zinc-400 hover:text-[#00ff66]"
+        }`}
+      >
+        <GithubIcon className="w-4 h-4 shrink-0" />
+        <span>github.com/Rey004/RepoStory</span>
+      </a>
     </div>
   );
 }

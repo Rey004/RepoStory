@@ -33,6 +33,8 @@ export default function Home() {
     loadingStepIndex,
     storyData,
     error,
+    isRateLimited,
+    isTokenError,
     isLightMode,
     setIsLightMode,
     handleSubmit,
@@ -40,6 +42,8 @@ export default function Home() {
   } = useRepoStory();
 
   const showLanding = !isLoading && !storyData;
+  // Also show landing (with error) if loading just finished with an error
+  const showLandingOrError = showLanding || (!isLoading && !!error);
 
   return (
     <div
@@ -62,7 +66,7 @@ export default function Home() {
       <SiteHeader onLogoClick={handleReset} />
 
       <main className="flex flex-col flex-1 justify-center items-center relative z-10 px-6 py-12 max-w-6xl w-full mx-auto min-h-0">
-        {showLanding && (
+        {showLandingOrError && (
           <LandingView
             isCut={isCut}
             showPixels={showPixels}
@@ -71,6 +75,8 @@ export default function Home() {
             onRepoUrlChange={setRepoUrl}
             onSubmit={handleSubmit}
             error={error}
+            isRateLimited={isRateLimited}
+            isTokenError={isTokenError}
             isLoading={isLoading}
           />
         )}

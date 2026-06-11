@@ -52,6 +52,8 @@ export function getLanguageList(languages, limit = 8) {
     .slice(0, limit)
     .map(([name, bytes]) => ({
       name,
-      percentage: totalBytes ? Math.round((bytes / totalBytes) * 100) : 0,
+      percentage: totalBytes
+        ? parseFloat(((bytes / totalBytes) * 100).toFixed(1))
+        : 0,
     }));
 }

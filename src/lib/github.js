@@ -1,4 +1,4 @@
-/**
+ /**
  * GitHub API client for RepoStory
  * Fetches repository metadata, languages, releases, contributors, and commit logs.
  */
@@ -76,15 +76,19 @@ function getHeaders() {
  * Fetch JSON from GitHub API with safety handling.
  */
 async function fetchGithub(url) {
+  const isDev = process.env.NODE_ENV === "development";
   try {
     const res = await fetch(url, {
       headers: getHeaders(),
-      next: { revalidate: 3600 }, // Cache responses for 1 hour
+      next: { revalidate: isDev ? 0 : 3600 }, // No cache in dev, 1hr in prod
     });
 
     if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error("GitHub token is invalid or expired. Remove GITHUB_TOKEN from your .env file or generate a new one at github.com/settings/tokens.");
+      }
       if (res.status === 403 || res.status === 429) {
-        throw new Error("GitHub API Rate limit exceeded. Try again later or configure GITHUB_TOKEN.");
+        throw new Error("GitHub API Rate limit exceeded. Try again later or add a GITHUB_TOKEN to your .env file.");
       }
       if (res.status === 404) {
         throw new Error("Repository not found. Check the URL and make sure it is public.");
@@ -96,6 +100,62 @@ async function fetchGithub(url) {
   } catch (error) {
     console.error(`Error fetching ${url}:`, error.message);
     throw error;
+  }
+}
+
+/**
+ * Fetch only the Response headers (no body consumed) — used for Link header parsing.
+ */
+async function fetchGithubHead(url) {
+  const isDev = process.env.NODE_ENV === "development";
+  const res = await fetch(url, {
+    headers: getHeaders(),
+    next: { revalidate: isDev ? 0 : 3600 },
+  });
+  return res;
+}
+
+/**
+ * Parse the 'last' page number from a GitHub Link header.
+ * Returns null if there is no next/last page (i.e. only 1 page).
+ * Example Link header:
+ *   <https://api.github.com/...?page=2>; rel="next", <...?page=42>; rel="last"
+ */
+function parseLinkLastPage(linkHeader) {
+  if (!linkHeader) return null;
+  const match = linkHeader.match(/[?&]page=(\d+)>; rel="last"/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+/**
+ * Get the true total count for a paginated GitHub endpoint.
+ * Fetches per_page=1 and reads the last page number from the Link header.
+ * Falls back to the length of the provided array if the probe fails.
+ *
+ * Handles GitHub's 202 Accepted (computing stats) for contributors endpoint
+ * by retrying up to 3 times with a short delay.
+ */
+async function getTotalCount(url, fallback = 0, retries = 3) {
+  try {
+    const probeUrl = `${url}${url.includes("?") ? "&" : "?"}per_page=1`;
+    const res = await fetchGithubHead(probeUrl);
+
+    // GitHub returns 202 while computing contributor stats — retry after delay.
+    if (res.status === 202 && retries > 0) {
+      await new Promise((r) => setTimeout(r, 1500));
+      return getTotalCount(url, fallback, retries - 1);
+    }
+
+    if (!res.ok) return fallback;
+    const lastPage = parseLinkLastPage(res.headers.get("link"));
+    // If no Link header, the full result fits in 1 page — count items in body.
+    if (lastPage === null) {
+      const data = await res.json();
+      return Array.isArray(data) ? data.length : fallback;
+    }
+    return lastPage;
+  } catch {
+    return fallback;
   }
 }
 
@@ -126,20 +186,79 @@ export async function fetchRepoData(owner, repo) {
       console.warn("Failed to fetch releases:", err.message);
     }
 
-    // 4. Fetch contributors
+    // 4. Fetch contributors (top 100 for display) + accurate total via Link header probe.
+    //    IMPORTANT: Run sequentially, not in parallel.
+    //    fetchContributors retries on 202 until GitHub finishes computing stats.
+    //    After it succeeds, getTotalCount hits a warm endpoint and returns immediately.
     let contributors = [];
+    let totalContributors = 0;
     try {
-      contributors = await fetchGithub(`${GITHUB_API_BASE}/repos/${cleanOwner}/${cleanRepo}/contributors?per_page=20`);
+      const contribUrl = `${GITHUB_API_BASE}/repos/${cleanOwner}/${cleanRepo}/contributors`;
+      const isDev = process.env.NODE_ENV === "development";
+
+      const fetchContributors = async (retries = 5) => {
+        const res = await fetch(`${contribUrl}?per_page=100`, {
+          headers: getHeaders(),
+          next: { revalidate: isDev ? 0 : 3600 },
+        });
+        if (res.status === 202 && retries > 0) {
+          await new Promise((r) => setTimeout(r, 2000));
+          return fetchContributors(retries - 1);
+        }
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data) ? data.filter(Boolean) : [];
+      };
+
+      // Step 1: fetch display data (retries until 200 or exhausted; warms GitHub's cache)
+      const contribData = await fetchContributors();
+      contributors = contribData;
+
+      // Step 2: exact total via per_page=1 probe.
+      // fetchContributors already warmed GitHub's cache so this returns immediately.
+      // linkTotal (lastPage × 100) overestimates by up to 99 — always use exact probe.
+      const exactTotal = await getTotalCount(contribUrl, contributors.length);
+      totalContributors = Math.max(exactTotal, contributors.length);
     } catch (err) {
       console.warn("Failed to fetch contributors:", err.message);
     }
 
-    // 5. Fetch recent commits (to analyze activity and weekly patterns)
+    // 5. Fetch recent commits for timeline/grid.
+    //    Read the Link header from the display response to get total count —
+    //    avoids a separate per_page=1 probe API call.
     let commits = [];
+    let totalCommits = 0;
     try {
-      commits = await fetchGithub(`${GITHUB_API_BASE}/repos/${cleanOwner}/${cleanRepo}/commits?per_page=100`);
+      const isDev = process.env.NODE_ENV === "development";
+      const commitsUrl = `${GITHUB_API_BASE}/repos/${cleanOwner}/${cleanRepo}/commits?per_page=100`;
+      const commitsRes = await fetch(commitsUrl, {
+        headers: getHeaders(),
+        next: { revalidate: isDev ? 0 : 3600 },
+      });
+      if (commitsRes.ok) {
+        const commitData = await commitsRes.json();
+        commits = Array.isArray(commitData) ? commitData : [];
+        const linkHeader = commitsRes.headers.get("link");
+        const lastPage = parseLinkLastPage(linkHeader);
+        // lastPage * 100 overestimates by up to 99; fine for display purposes.
+        totalCommits = lastPage ? lastPage * 100 : commits.length;
+      }
     } catch (err) {
       console.warn("Failed to fetch commits:", err.message);
+    }
+
+    // 5b. Get accurate open-issues count.
+    //     open_issues_count from the repo API includes PRs, so we subtract
+    //     the open PR count to get pure issues only.
+    let openIssuesCount = repoDetails.open_issues_count; // fallback
+    try {
+      const openPrCount = await getTotalCount(
+        `${GITHUB_API_BASE}/repos/${cleanOwner}/${cleanRepo}/pulls?state=open`,
+        0
+      );
+      openIssuesCount = Math.max(0, repoDetails.open_issues_count - openPrCount);
+    } catch (err) {
+      console.warn("Failed to fetch accurate issue count:", err.message);
     }
 
     // 6. Fetch README and extract useful summary/highlights for the card
@@ -167,8 +286,10 @@ export async function fetchRepoData(owner, repo) {
         description: repoDetails.description || "No description provided.",
         stars: repoDetails.stargazers_count,
         forks: repoDetails.forks_count,
-        watchers: repoDetails.watchers_count,
-        openIssues: repoDetails.open_issues_count,
+        // subscribers_count is the real watcher count; watchers_count is a
+        // GitHub API quirk that mirrors stargazers_count (stars).
+        watchers: repoDetails.subscribers_count ?? repoDetails.watchers_count,
+        openIssues: openIssuesCount,
         createdAt: repoDetails.created_at,
         updatedAt: repoDetails.updated_at,
         pushedAt: repoDetails.pushed_at,
@@ -190,6 +311,8 @@ export async function fetchRepoData(owner, repo) {
         publishedAt: r.published_at,
         htmlUrl: r.html_url,
       })),
+      totalContributors,
+      totalCommits,
       contributors: contributors.map(c => ({
         login: c.login,
         avatarUrl: c.avatar_url,

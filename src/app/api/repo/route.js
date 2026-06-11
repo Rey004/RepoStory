@@ -74,6 +74,8 @@ export async function GET(request) {
       status = 404;
     } else if (error.message.includes("Rate limit")) {
       status = 429;
+    } else if (error.message.includes("invalid or expired")) {
+      status = 401;
     }
 
     return NextResponse.json(

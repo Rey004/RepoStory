@@ -9,6 +9,8 @@ export function useRepoStory() {
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [storyData, setStoryData] = useState(null);
   const [error, setError] = useState(null);
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [isTokenError, setIsTokenError] = useState(false);
   const [isLightMode, setIsLightMode] = useState(false);
 
   useEffect(() => {
@@ -34,13 +36,25 @@ export function useRepoStory() {
 
     setIsLoading(true);
     setError(null);
+    setIsRateLimited(false);
+    setIsTokenError(false);
     setStoryData(null);
 
     try {
       const response = await fetch(`/api/repo?url=${encodeURIComponent(targetUrl)}`);
       const data = await response.json();
 
+      // Detect rate limit by HTTP status or error message content
+      const isRateLimit =
+        response.status === 429 ||
+        (data.error && /rate limit/i.test(data.error));
+      const isTokenInvalid =
+        response.status === 401 ||
+        (data.error && /invalid or expired/i.test(data.error));
+
       if (!response.ok) {
+        if (isRateLimit) setIsRateLimited(true);
+        if (isTokenInvalid) setIsTokenError(true);
         throw new Error(data.error || "Failed to fetch repository story.");
       }
 
@@ -64,6 +78,8 @@ export function useRepoStory() {
     setStoryData(null);
     setRepoUrl("");
     setError(null);
+    setIsRateLimited(false);
+    setIsTokenError(false);
   };
 
   return {
@@ -73,6 +89,8 @@ export function useRepoStory() {
     loadingStepIndex,
     storyData,
     error,
+    isRateLimited,
+    isTokenError,
     isLightMode,
     setIsLightMode,
     handleSubmit,

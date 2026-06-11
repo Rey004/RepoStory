@@ -11,6 +11,8 @@ export default function LandingView({
   onRepoUrlChange,
   onSubmit,
   error,
+  isRateLimited,
+  isTokenError,
   isLoading,
 }) {
   return (
@@ -27,6 +29,8 @@ export default function LandingView({
           onRepoUrlChange={onRepoUrlChange}
           onSubmit={onSubmit}
           error={error}
+          isRateLimited={isRateLimited}
+          isTokenError={isTokenError}
           isLoading={isLoading}
         />
         <InfoCards />

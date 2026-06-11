@@ -13,7 +13,7 @@ import CardFooter from "@/components/card/CardFooter";
 export default function RepoStoryCard({ data, cardRef, isLightMode = false, themeColor = "#00ff66" }) {
   if (!data) return null;
 
-  const { repoDetails, languages, commits, contributors, releases } = data.githubData;
+  const { repoDetails, languages, commits, contributors, releases, totalCommits, totalContributors } = data.githubData;
   const { archetype, commitPatterns, milestones } = data.storyData;
 
   const languageList = getLanguageList(languages, 8);
@@ -89,8 +89,8 @@ export default function RepoStoryCard({ data, cardRef, isLightMode = false, them
         {/* Hub (includes Stats, Tabs for Perks & Badges) */}
         <HeroStats
           repoDetails={repoDetails}
-          contributorsCount={contributors.length}
-          commitsCount={commits.length}
+          contributorsCount={totalContributors || contributors.length}
+          commitsCount={totalCommits || commits.length}
           isLightMode={isLightMode}
           storyData={data.storyData}
           releasesCount={releases.length}

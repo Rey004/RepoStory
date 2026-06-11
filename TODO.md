@@ -1,0 +1,4 @@
+- [x] Remove never-rendered (non-nested) UI branches from `src/components/card/CommitInsights.js`
+- [x] Remove never-rendered (non-nested) UI branches from `src/components/card/Achievements.js`
+- [ ] Ensure Repo card still renders nested perks/badges correctly
+- [ ] Run lint/build (if available) to confirm no syntax errors

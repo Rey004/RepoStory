@@ -53,7 +53,7 @@ export default function HeroStats({
       isLightMode ? "border-zinc-200 bg-zinc-50/50" : "border-zinc-800/80 bg-zinc-950/30"
     }`}>
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] uppercase font-mono tracking-widest" style={{ color: themeColor }}>
+        <span className="text-[12px] uppercase font-mono tracking-widest font-bold" style={{ color: themeColor }}>
           {"// hub"}
         </span>
         <div className="flex-1 h-px" style={{ backgroundColor: `${themeColor}33` }} />
@@ -84,7 +84,7 @@ export default function HeroStats({
           style={{ borderTopColor: themeColor }}
         >
           <div className="flex items-center justify-between border-b border-zinc-800/10 dark:border-zinc-200/10 pb-1.5 shrink-0">
-            <span className="text-[8px] uppercase font-mono tracking-widest" style={{ color: themeColor }}>
+            <span className="text-[10px] uppercase font-mono tracking-widest font-bold" style={{ color: themeColor }}>
               [ sys.perks ]
             </span>
             <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: themeColor }} />
@@ -102,7 +102,7 @@ export default function HeroStats({
           style={{ borderTopColor: themeColor }}
         >
           <div className="flex items-center justify-between border-b border-zinc-800/10 dark:border-zinc-200/10 pb-1.5 shrink-0">
-            <span className="text-[8px] uppercase font-mono tracking-widest" style={{ color: themeColor }}>
+            <span className="text-[10px] uppercase font-mono tracking-widest font-bold" style={{ color: themeColor }}>
               [ sys.badges ]
             </span>
             <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: themeColor }} />

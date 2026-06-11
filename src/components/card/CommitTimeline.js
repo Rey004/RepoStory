@@ -57,7 +57,7 @@ export default function CommitTimeline({ milestones, isLightMode, textMuted, tex
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `${themeColor}99` }} />
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }} />
         </div>
-        <span className="text-[9px] uppercase font-mono tracking-widest" style={{ color: themeColor }}>
+        <span className="text-[10px] uppercase font-mono tracking-widest font-bold" style={{ color: themeColor }}>
           {"// repo.timeline_flowchart"}
         </span>
       </div>

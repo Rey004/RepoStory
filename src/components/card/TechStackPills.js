@@ -27,7 +27,7 @@ export default function TechStackPills({ languageList, isLightMode, showLabel = 
     <div className="relative z-10">
       {showLabel && (
         <div className="flex items-center gap-2 mb-2.5">
-          <span className="text-[10px] uppercase font-mono tracking-widest" style={{ color: themeColor }}>
+          <span className="text-[15px] uppercase font-mono tracking-widest font-bold" style={{ color: themeColor }}>
             // tech.stack
           </span>
           <div className="flex-1 h-px" style={{ backgroundColor: `${themeColor}33` }} />
@@ -49,7 +49,7 @@ export default function TechStackPills({ languageList, isLightMode, showLabel = 
             >
               <LanguageIcon name={lang.name} themeColor={themeColor} />
               <span>{lang.name}</span>
-              <span style={{ color: `${themeColor}cc` }}>{lang.percentage}%</span>
+              <span className={`text-[10px] font-bold`} style={{ color: `${themeColor}cc` }}>{lang.percentage}%</span>
             </span>
           ))}
         </div>

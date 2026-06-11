@@ -123,13 +123,13 @@ export default function CustomColorPicker({ value, onChange }) {
       {/* Popup panel */}
       {open && (
         <div
-          className="absolute right-0 top-8 z-50 w-[240px] rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/60 overflow-hidden"
+          className="absolute right-0 bottom-8 md:bottom-auto md:top-8 z-50 w-[210px] sm:w-[220px] md:w-[240px] rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/60 overflow-hidden"
           style={{ boxShadow: `0 0 0 1px #27272a, 0 20px 60px rgba(0,0,0,0.8), 0 0 20px ${currentHex}18` }}
         >
           {/* SV gradient pad */}
           <div
             ref={svRef}
-            className="relative w-full h-36 cursor-crosshair select-none"
+            className="relative w-full h-28 sm:h-32 md:h-36 cursor-crosshair select-none"
             style={{
               background: `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, ${hueColor})`,
             }}
@@ -148,7 +148,7 @@ export default function CustomColorPicker({ value, onChange }) {
             />
           </div>
 
-          <div className="px-3 py-2.5 flex flex-col gap-2.5 bg-[#0a0a0a] border-t border-zinc-900">
+          <div className="px-2.5 py-2 md:px-3 md:py-2.5 flex flex-col gap-2 md:gap-2.5 bg-[#0a0a0a] border-t border-zinc-900">
             {/* Hue slider */}
             <div
               ref={hueRef}

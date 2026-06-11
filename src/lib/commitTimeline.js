@@ -122,5 +122,20 @@ export function buildCommitTimeline(commits = [], repoDetails = {}, releases = [
     });
   }
 
-  return unique.slice(-7);
+  const birthMilestone = unique.find((m) => m.type === "birth");
+  const earliestCommitMilestone = unique.find((m) => m.title === "Earliest Tracked Commit");
+
+  const birthId = birthMilestone ? birthMilestone.id : null;
+  const earliestCommitId = earliestCommitMilestone ? earliestCommitMilestone.id : null;
+  const restMilestones = unique.filter((m) => m.id !== birthId && m.id !== earliestCommitId);
+
+  const selected = [];
+  if (birthMilestone) selected.push(birthMilestone);
+  if (earliestCommitMilestone) selected.push(earliestCommitMilestone);
+
+  const needed = 4 - selected.length;
+  const recent = restMilestones.slice(-needed);
+  selected.push(...recent);
+
+  return selected.sort((a, b) => a.date - b.date);
 }

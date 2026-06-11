@@ -35,7 +35,7 @@ export default function StoryWorkstation({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 flex justify-center py-2 relative w-full overflow-hidden">
-          <CardWrapper cardRef={cardRef} cardWidth={760}>
+          <CardWrapper cardRef={cardRef} cardWidth={800}>
             <RepoStoryCard
               data={storyData}
               cardRef={cardRef}

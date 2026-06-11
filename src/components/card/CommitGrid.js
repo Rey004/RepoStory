@@ -56,13 +56,9 @@ export default function CommitGrid({ commits, isLightMode }) {
   };
 
   return (
-    <div
-      className={`relative z-10 flex flex-col gap-1.5 p-3 rounded-lg border ${
-        isLightMode ? "border-zinc-200 bg-zinc-50/80" : "border-zinc-800/80 bg-black/40"
-      }`}
-    >
+    <div className="relative z-10 flex flex-col gap-1.5 w-full bg-transparent">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500">Commit Activity</span>
+        <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500">// commit.activity</span>
         <span className="text-[9px] font-mono text-zinc-500">Last 105 Days</span>
       </div>
       <div className="flex gap-1.5 select-none">
@@ -80,7 +76,7 @@ export default function CommitGrid({ commits, isLightMode }) {
                   return (
                     <div
                       key={rowIdx}
-                      className="w-2.5 h-2.5 rounded-sm bg-zinc-900 border border-zinc-800/50"
+                      className="w-3 h-3 rounded-sm bg-zinc-900 border border-zinc-800/50"
                     />
                   );
                 }
@@ -88,7 +84,7 @@ export default function CommitGrid({ commits, isLightMode }) {
                   <div
                     key={rowIdx}
                     title={`${cell.dateStr}: ${cell.count} commits`}
-                    className={`w-2.5 h-2.5 rounded-sm border ${getBgClass(cell.level)}`}
+                    className={`w-3 h-3 rounded-sm border ${getBgClass(cell.level)}`}
                   />
                 );
               })}

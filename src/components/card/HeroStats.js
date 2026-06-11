@@ -25,10 +25,10 @@ function OrbitStat({ icon: Icon, label, value, positionClass, isLightMode }) {
 function AssetIcon({ isLightMode }) {
   return (
     <div className="relative z-10 flex items-center justify-center">
-      <RepoStoryLogo className={`w-16 h-16 transition-all duration-300 hover:scale-105 ${
+      <RepoStoryLogo className={`w-25 h-25 transition-all duration-300 hover:scale-105 ${
         isLightMode
-          ? "text-emerald-500 drop-shadow-[0_4px_10px_rgba(16,185,129,0.2)]"
-          : "text-green-level-4 drop-shadow-[0_4px_15px_rgba(0,255,102,0.3)]"
+          ? "text-emerald-500 drop-shadow-[0_2px_5px_rgba(16,185,129,0.2)]"
+          : "text-green-level-4 drop-shadow-[0_2px_5px_rgba(0,255,102,0.3)]"
       }`} />
     </div>
   );
@@ -46,17 +46,17 @@ export default function HeroStats({
   bgSubCard,
 }) {
   return (
-    <div className={`relative z-10 w-full rounded-2xl border overflow-hidden p-3.5 sm:p-4 bg-linear-to-b from-transparent to-black/10 min-h-[380px] ${
+    <div className={`relative z-10 w-full rounded-2xl border overflow-hidden p-3.5 sm:p-4 bg-linear-to-b from-transparent to-black/10 min-h-[360px] ${
       isLightMode ? "border-zinc-200 bg-zinc-50/50" : "border-zinc-800/80 bg-zinc-950/30"
     }`}>
       <div className="flex items-center gap-2 mb-2">
         <span className={`text-[10px] uppercase font-mono tracking-widest ${isLightMode ? "text-emerald-700" : "text-green-level-4"}`}>
-          // hub
+          {"// hub"}
         </span>
         <div className={`flex-1 h-px ${isLightMode ? "bg-zinc-200" : "bg-green-level-4/20"}`} />
       </div>
 
-      <div className="relative grid place-items-center min-h-[320px] w-full">
+      <div className="relative grid place-items-center min-h-[300px] w-full">
         <div className={`absolute inset-0 rounded-2xl ${isLightMode ? "bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.08),transparent_65%)]" : "bg-[radial-gradient(circle_at_center,rgba(0,255,102,0.10),transparent_65%)]"}`} />
 
         {/* Outer Orbit / Grid Stats */}

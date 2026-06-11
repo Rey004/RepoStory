@@ -32,7 +32,7 @@ export default function RepoStoryCard({ data, cardRef, isLightMode = false }) {
     <div
       ref={cardRef}
       id="repo-story-card"
-      className={`w-180 shrink-0 p-5 rounded-xl border shadow-2xl relative overflow-hidden transition-all duration-300 ${bgMain}`}
+      className={`w-[800px] h-[960px] shrink-0 p-6 pb-7 rounded-xl border shadow-2xl relative overflow-hidden flex flex-col justify-between transition-all duration-300 ${bgMain}`}
     >
       {!isLightMode && (
         <>
@@ -41,8 +41,6 @@ export default function RepoStoryCard({ data, cardRef, isLightMode = false }) {
           <div className="absolute top-0 left-0 right-0 h-24 bg-linear-to-b from-green-level-4/8 to-transparent pointer-events-none z-0" />
         </>
       )}
-
-      <CardWatermark isLightMode={isLightMode} />
 
       <div className={`absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 z-10 ${isLightMode ? "border-zinc-300" : "border-green-level-4/40"}`} />
       <div className={`absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 z-10 ${isLightMode ? "border-zinc-300" : "border-green-level-4/40"}`} />
@@ -59,7 +57,7 @@ export default function RepoStoryCard({ data, cardRef, isLightMode = false }) {
         languageList={languageList}
       />
 
-      <div className="relative z-10 flex flex-col gap-4">
+      <div className="relative z-10 flex flex-col gap-4 flex-1 justify-center my-2.5">
         {/* Hub (includes Stats, Tabs for Perks & Badges) */}
         <HeroStats
           repoDetails={repoDetails}
@@ -73,18 +71,23 @@ export default function RepoStoryCard({ data, cardRef, isLightMode = false }) {
           bgSubCard={bgSubCard}
         />
 
-        {/* Timeline */}
-        <div className={`p-3 rounded-xl border ${bgSubCard}`}>
-          <CommitTimeline
-            milestones={milestones}
-            isLightMode={isLightMode}
-            textMuted={textMuted}
-            textSub={textSub}
-          />
-        </div>
+        {/* Bottom Section: Timeline & Commit Grid Side-by-Side */}
+        <div className="grid grid-cols-[1.62fr_1fr] gap-4">
+          {/* Left: Timeline Flowchart */}
+          <div className={`p-4 rounded-xl border ${bgSubCard} flex flex-col justify-between h-[270px]`}>
+            <CommitTimeline
+              milestones={milestones}
+              isLightMode={isLightMode}
+              textMuted={textMuted}
+              textSub={textSub}
+            />
+          </div>
 
-        {/* Commit Grid (Full Width) */}
-        <CommitGrid commits={commits} isLightMode={isLightMode} />
+          {/* Right: Commit Activity (CommitGrid) */}
+          <div className={`p-4 rounded-xl border ${bgSubCard} flex flex-col justify-center h-[270px]`}>
+            <CommitGrid commits={commits} isLightMode={isLightMode} />
+          </div>
+        </div>
       </div>
 
       <CardFooter isLightMode={isLightMode} />

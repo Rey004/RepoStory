@@ -1,8 +1,15 @@
 import React, { useState } from "react";
 import { toPng } from "html-to-image";
 import { Download, Sun, Moon } from "lucide-react";
+import CustomColorPicker from "@/components/CustomColorPicker";
 
-export default function ExportControls({ cardRef, isLightMode, setIsLightMode }) {
+export default function ExportControls({
+  cardRef,
+  isLightMode,
+  setIsLightMode,
+  themeColor,
+  setThemeColor,
+}) {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -56,7 +63,7 @@ export default function ExportControls({ cardRef, isLightMode, setIsLightMode })
         >
           {isLightMode ? (
             <>
-              <Moon className="w-3.5 h-3.5 text-[#00ff66]" />
+              <Moon className="w-3.5 h-3.5" style={{ color: themeColor }} />
               <span>Dark Mode</span>
             </>
           ) : (
@@ -68,6 +75,17 @@ export default function ExportControls({ cardRef, isLightMode, setIsLightMode })
         </button>
       </div>
 
+      {/* Theme Color Picker Section */}
+      <div className="flex flex-col gap-2 pb-3 border-b border-zinc-900">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-zinc-400">Accent Color</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-zinc-500">{themeColor.toUpperCase()}</span>
+            <CustomColorPicker value={themeColor} onChange={setThemeColor} />
+          </div>
+        </div>
+      </div>
+
       {/* Export Action Buttons */}
       <div className="flex flex-col gap-2.5 mt-2">
         <button
@@ -77,7 +95,7 @@ export default function ExportControls({ cardRef, isLightMode, setIsLightMode })
           className="w-full flex items-center justify-center gap-2 py-3 px-4 text-xs font-bold rounded-full bg-[#00ff66] text-black hover:bg-[#00e655] transition-all duration-300 cursor-pointer font-display shadow-none"
         >
           <Download className="w-4 h-4" />
-          <span>{isDownloading ? "Generating PNG..." : "Download PNG Card"}</span>
+          <span>{isDownloading ? "Generating PNG..." : "Download RepoStory"}</span>
         </button>
       </div>
 

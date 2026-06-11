@@ -1,4 +1,4 @@
-export default function CommitGrid({ commits, isLightMode }) {
+export default function CommitGrid({ commits, isLightMode, themeColor = "#00ff66" }) {
   const gridRows = 7;
   const gridCols = 15;
   const totalDays = gridRows * gridCols;
@@ -36,23 +36,20 @@ export default function CommitGrid({ commits, isLightMode }) {
     rows[day].push(cell);
   });
 
-  const getBgClass = (level) => {
-    if (isLightMode) {
-      switch (level) {
-        case 1: return "bg-emerald-100 border-emerald-200";
-        case 2: return "bg-emerald-250 border-emerald-300";
-        case 3: return "bg-emerald-450 border-emerald-550";
-        case 4: return "bg-emerald-600 border-emerald-700";
-        default: return "bg-zinc-100 border-zinc-200";
-      }
+  // Map level → opacity suffix for hex color
+  const levelOpacity = { 1: "26", 2: "59", 3: "99", 4: "ff" };
+
+  const getCellStyle = (level) => {
+    if (level === 0) {
+      return isLightMode
+        ? { backgroundColor: "#f4f4f5", borderColor: "#e4e4e7" }
+        : { backgroundColor: "#18181b", borderColor: "#27272a80" };
     }
-    switch (level) {
-      case 1: return "bg-[#003314] border-[#004d1f]";
-      case 2: return "bg-[#006629] border-[#008033]";
-      case 3: return "bg-[#00b347] border-[#00cc52]";
-      case 4: return "bg-[#00ff66] border-[#33ff85]";
-      default: return "bg-zinc-900 border-zinc-800";
-    }
+    const opacity = levelOpacity[level];
+    return {
+      backgroundColor: `${themeColor}${opacity}`,
+      borderColor: `${themeColor}${Math.min(parseInt(opacity, 16) + 0x20, 0xff).toString(16).padStart(2, "0")}`,
+    };
   };
 
   return (
@@ -72,19 +69,13 @@ export default function CommitGrid({ commits, isLightMode }) {
             <div key={colIdx} className="flex flex-col gap-1">
               {Array.from({ length: gridRows }).map((_, rowIdx) => {
                 const cell = rows[rowIdx]?.[colIdx];
-                if (!cell) {
-                  return (
-                    <div
-                      key={rowIdx}
-                      className="w-3 h-3 rounded-sm bg-zinc-900 border border-zinc-800/50"
-                    />
-                  );
-                }
+                const level = cell ? cell.level : 0;
                 return (
                   <div
                     key={rowIdx}
-                    title={`${cell.dateStr}: ${cell.count} commits`}
-                    className={`w-3 h-3 rounded-sm border ${getBgClass(cell.level)}`}
+                    title={cell ? `${cell.dateStr}: ${cell.count} commits` : ""}
+                    className="w-3 h-3 rounded-sm border"
+                    style={getCellStyle(level)}
                   />
                 );
               })}

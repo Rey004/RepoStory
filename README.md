@@ -68,7 +68,7 @@
    npm install
    ```
 
-3. **Configure Environment:**
+3. **Configure Environment: (Optional)**
    Create a `.env` file in the root:
    ```env
    # Required to avoid rate limits (5,000 reqs/hr vs 60/hr)

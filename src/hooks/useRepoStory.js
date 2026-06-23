@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { LOADING_STEPS } from "@/constants/loadingSteps";
 
 export function useRepoStory() {
@@ -12,6 +12,8 @@ export function useRepoStory() {
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [isTokenError, setIsTokenError] = useState(false);
   const [isLightMode, setIsLightMode] = useState(false);
+  const [themeColor, setThemeColor] = useState("#00ff66");
+  const [didAutoFetch, setDidAutoFetch] = useState(false);
 
   useEffect(() => {
     let interval;
@@ -30,7 +32,7 @@ export function useRepoStory() {
     return () => clearInterval(interval);
   }, [isLoading]);
 
-  const fetchRepoStory = async (urlToFetch) => {
+  const fetchRepoStory = useCallback(async (urlToFetch) => {
     const targetUrl = urlToFetch || repoUrl;
     if (!targetUrl) return;
 
@@ -67,7 +69,49 @@ export function useRepoStory() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [repoUrl]);
+
+  // Read URL query params on mount for shareable links
+  useEffect(() => {
+    if (didAutoFetch) return;
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const urlParam = params.get("url");
+    const accentParam = params.get("accent");
+
+    if (accentParam) {
+      // Accept hex colors with or without #
+      const color = accentParam.startsWith("#") ? accentParam : `#${accentParam}`;
+      if (/^#[0-9a-fA-F]{6}$/.test(color)) {
+        setThemeColor(color);
+      }
+    }
+
+    if (urlParam) {
+      setRepoUrl(urlParam);
+      setDidAutoFetch(true);
+      fetchRepoStory(urlParam);
+    }
+  }, [didAutoFetch, fetchRepoStory]);
+
+  // Sync URL query params when storyData or themeColor changes
+  const updateShareUrl = useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (!storyData || !repoUrl) return;
+
+    const params = new URLSearchParams();
+    params.set("url", repoUrl);
+    if (themeColor && themeColor !== "#00ff66") {
+      params.set("accent", themeColor.replace("#", ""));
+    }
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, "", newUrl);
+  }, [storyData, repoUrl, themeColor]);
+
+  useEffect(() => {
+    updateShareUrl();
+  }, [updateShareUrl]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -80,6 +124,10 @@ export function useRepoStory() {
     setError(null);
     setIsRateLimited(false);
     setIsTokenError(false);
+    // Clear query params on reset
+    if (typeof window !== "undefined") {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   };
 
   return {
@@ -93,6 +141,8 @@ export function useRepoStory() {
     isTokenError,
     isLightMode,
     setIsLightMode,
+    themeColor,
+    setThemeColor,
     handleSubmit,
     handleReset,
   };

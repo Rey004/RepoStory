@@ -118,6 +118,9 @@ export function analyzeCommitPatterns(commits) {
     dayOfWeek,
     nightOwlRatio: Math.round(nightOwlRatio * 100),
     weekendRatio: Math.round(weekendRatio * 100),
+    nightCommitCount: nightOwlCount,
+    weekendCommitCount: weekendCount,
+    totalCommits: commits.length,
   };
 }
 

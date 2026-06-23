@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { ArrowLeft } from "lucide-react";
 import RepoStoryCard from "@/components/RepoStoryCard";
 import ExportControls from "@/components/ExportControls";
@@ -10,10 +10,11 @@ export default function StoryWorkstation({
   storyData,
   isLightMode,
   setIsLightMode,
+  themeColor,
+  setThemeColor,
   onReset,
 }) {
   const cardRef = useRef(null);
-  const [themeColor, setThemeColor] = useState("#00ff66");
   const { repoDetails } = storyData.githubData;
 
   return (

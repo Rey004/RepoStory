@@ -37,6 +37,8 @@ export default function Home() {
     isTokenError,
     isLightMode,
     setIsLightMode,
+    themeColor,
+    setThemeColor,
     handleSubmit,
     handleReset,
   } = useRepoStory();
@@ -93,6 +95,8 @@ export default function Home() {
             storyData={storyData}
             isLightMode={isLightMode}
             setIsLightMode={setIsLightMode}
+            themeColor={themeColor}
+            setThemeColor={setThemeColor}
             onReset={handleReset}
           />
         )}
